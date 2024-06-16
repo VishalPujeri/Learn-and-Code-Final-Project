@@ -1,5 +1,6 @@
 from Database import *
 from User import *
+from Database import connect_to_db
 
 class MenuItem:
     def __init__(self, menu_item_id, menu_item_name, price, availability):
@@ -25,30 +26,31 @@ class Recommendation:
         self.meal_type = meal_type
 
 class UserPreference:
-    def __init__(self, preference_id, user_id, menu_item_id):
+    def __init__(self, preference_id, user_id, menu_item_id,preference_date=None):
         self.preference_id = preference_id
         self.user_id = user_id
         self.menu_item_id = menu_item_id
+        self.preference_date = preference_date if preference_date else datetime.now()
 
 class Menu:
     def display_menu_item(self):
         conn = connect_to_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT menu_item_name,price FROM menuitems WHERE availability = '1'")
-        food_item = cursor.fetchall()
+        cursor.execute("SELECT menu_item_name, price FROM MenuItems WHERE availability = '1'")
+        food_items = cursor.fetchall()
         conn.close()
-        print(f"{'Food Item':<20} {'Price':>10}")
-        print("-" * 30)
-        for food_items in food_item:
-            print(f"{food_items[0]:<20} {food_items[1]:>10.2f}")
+        display = f"{'Food Item':<20} {'Price':>10}\n" + "-" * 30 + "\n"
+        for food_item in food_items:
+            display += f"{food_item[0]:<20} {food_item[1]:>10.2f}\n"
+        return display
 
     def display_recommended_menu(self):
         conn = connect_to_db()
-        cursur = conn.cursor()
-        cursur.execute("SELECT m.menu_item_name,m.price FROM recommendations r join menuitems m on r.menu_item_id = m.menu_item_id WHERE m.availability = 1 AND date = CURRENT_DATE")
-        food_item = cursur.fetchall()
+        cursor = conn.cursor()
+        cursor.execute("SELECT m.menu_item_name, m.price FROM Recommendations r JOIN MenuItems m ON r.menu_item_id = m.menu_item_id WHERE m.availability = 1 AND date = CURRENT_DATE")
+        food_items = cursor.fetchall()
         conn.close()
-        print(f"{'Food Item':<20} {'Price':>10}")
-        print("-" * 30)
-        for food_items in food_item:
-            print(f"{food_items[0]:<20} {food_items[1]:>10.2f}")
+        display = f"{'Food Item':<20} {'Price':>10}\n" + "-" * 30 + "\n"
+        for food_item in food_items:
+            display += f"{food_item[0]:<20} {food_item[1]:>10.2f}\n"
+        return display
