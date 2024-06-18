@@ -36,7 +36,6 @@ class Chef(User):
         conn = connect_to_db()
         cursor = conn.cursor()
 
-        # Fetch feedback data
         cursor.execute("SELECT menu_item_id, comment FROM Feedback")
         feedback_data = cursor.fetchall()
 
@@ -57,13 +56,11 @@ class Chef(User):
 
         average_sentiments = {item: sentiment_scores[item] / sentiment_counts[item] for item in sentiment_scores}
 
-        # Fetch user preferences
         cursor.execute("SELECT menu_item_id, COUNT(*) as preference_count FROM UserPreference GROUP BY menu_item_id")
         preference_data = cursor.fetchall()
 
         preference_scores = {item[0]: item[1] for item in preference_data}
 
-        # Combine sentiment scores and preference scores
         combined_scores = {}
         for menu_item_id in set(list(average_sentiments.keys()) + list(preference_scores.keys())):
             sentiment_score = average_sentiments.get(menu_item_id, 0)
@@ -74,14 +71,12 @@ class Chef(User):
         top_n = 5
         top_n_recommendations = top_recommendations[:top_n]
 
-        # Fetch menu item names
         menu_item_names = {}
         cursor.execute("SELECT menu_item_id, menu_item_name FROM MenuItems")
         menu_items = cursor.fetchall()
         for item in menu_items:
             menu_item_names[item[0]] = item[1]
 
-        # Generate report
         report = "Top Recommended Menu Items based on Feedback Sentiment and User Preferences:\n"
         report += f"{'Menu Item ID':<15} {'Menu Item Name':<25} {'Combined Score':>15}\n" + "-" * 55 + "\n"
         for recommendation in top_n_recommendations:

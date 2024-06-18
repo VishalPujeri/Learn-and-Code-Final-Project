@@ -2,6 +2,7 @@ from Database import connect_to_db
 from User import User
 from Cafeteria import MenuItem
 from Validation import Validation
+from notification import add_notification
 
 class Admin(User):
     def __init__(self, user_id, user_name):
@@ -9,35 +10,62 @@ class Admin(User):
 
     def add_menu_item(self, name, price, availability):
         item = MenuItem(None, name, price, availability)
-        conn = connect_to_db()
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO MenuItems (menu_item_name, price, availability) VALUES (%s, %s, %s)", 
-                       (item.menu_item_name, item.price, item.availability))
-        conn.commit()
-        conn.close()
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO MenuItems (menu_item_name, price, availability) VALUES (%s, %s, %s)", 
+                           (item.menu_item_name, item.price, item.availability))
+            conn.commit()
+            # Notify all users about the new food item
+            cursor.execute("SELECT user_id FROM Users WHERE user_role = 'Employee'")
+            user_ids = cursor.fetchall()
+            for user_id in user_ids:
+                add_notification(user_id[0], f"New food item added: {name}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            conn.close()
 
     def update_menu_item(self, item_name, item_new_name, price, availability):
-        check_item = Validation.check_menu_item_existance(item_name)
-        if check_item:
-            conn = connect_to_db()
-            cursor = conn.cursor()
-            cursor.execute("SELECT menu_item_id FROM MenuItems WHERE menu_item_name = %s", (item_name,))
-            item_id_list = cursor.fetchone()
+        try:
+            check_item = Validation.check_menu_item_existance(item_name)
+            if check_item:
+                conn = connect_to_db()
+                cursor = conn.cursor()
+                cursor.execute("SELECT menu_item_id FROM MenuItems WHERE menu_item_name = %s", (item_name,))
+                item_id_list = cursor.fetchone()
 
-            if item_id_list:
-                item_id = item_id_list[0]
-                cursor.execute(
-                    "UPDATE MenuItems SET menu_item_name=%s, price=%s, availability=%s WHERE menu_item_id=%s", 
-                    (item_new_name, price, availability, item_id)
-                )
-                conn.commit()
-                conn.close()
+                if item_id_list:
+                    item_id = item_id_list[0]
+                    cursor.execute(
+                        "UPDATE MenuItems SET menu_item_name=%s, price=%s, availability=%s WHERE menu_item_id=%s", 
+                        (item_new_name, price, availability, item_id)
+                    )
+                    conn.commit()
+                    # Notify all users about the food item status change
+                    cursor.execute("SELECT user_id FROM Users WHERE user_role = 'Employee'")
+                    user_ids = cursor.fetchall()
+                    for user_id in user_ids:
+                        add_notification(user_id[0], f"Food item updated: {item_name} to {item_new_name} with price {price}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            conn.close()
 
     def delete_menu_item(self, item_name):
-        check_item = Validation.check_menu_item_existance(item_name)
-        if check_item:
-            conn = connect_to_db()
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM MenuItems WHERE menu_item_name = %s", (item_name,))
-            conn.commit()
+        try:
+            check_item = Validation.check_menu_item_existance(item_name)
+            if check_item:
+                conn = connect_to_db()
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM MenuItems WHERE menu_item_name = %s", (item_name,))
+                conn.commit()
+                # Notify all users about the food item deletion
+                cursor.execute("SELECT user_id FROM Users WHERE user_role = 'Employee'")
+                user_ids = cursor.fetchall()
+                for user_id in user_ids:
+                    add_notification(user_id[0], f"Food item deleted: {item_name}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
             conn.close()

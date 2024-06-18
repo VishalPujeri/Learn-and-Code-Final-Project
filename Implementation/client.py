@@ -33,6 +33,8 @@ def handle_user_menu(client, user_role):
         elif user_role == 'Employee':
             display_employee_menu()
 
+        check_notifications(client)
+
         choice = input("Enter your choice: ")
         if choice not in ['1','2','3','4','5']:
             break
@@ -55,6 +57,14 @@ def handle_user_menu(client, user_role):
                 client.send(command.encode('utf-8'))
                 response = client.recv(4096).decode('utf-8')
                 print(f"Received response:\n {response}")
+
+def check_notifications(client):
+    client.send("get_notifications".encode('utf-8'))
+    response = client.recv(4096).decode('utf-8')
+    if response != "No new notifications.":
+        print("\n--- New Notifications ---")
+        print(response)
+        print("------------------------\n")
 
 def translate_choice_to_command(user_role, choice):
     if user_role == 'Admin':

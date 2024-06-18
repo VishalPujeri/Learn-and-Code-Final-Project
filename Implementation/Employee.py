@@ -27,3 +27,13 @@ class Employee(User):
         conn.commit()
         conn.close()
         print("Preference selected successfully.")
+
+    def receive_notification(self):
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT notification_text FROM Notifications WHERE user_id = %s", (self.user_id,))
+        notifications = cursor.fetchall()
+        cursor.execute("DELETE FROM Notifications WHERE user_id = %s", (self.user_id,))
+        conn.commit()
+        conn.close()
+        return [notification[0] for notification in notifications]

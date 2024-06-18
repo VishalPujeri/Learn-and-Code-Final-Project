@@ -16,12 +16,3 @@ def get_notifications(user_id):
     conn.commit()
     conn.close()
     return [notification[0] for notification in notifications]
-
-def notify_all_employees(notification_text):
-    conn = connect_to_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT user_id FROM Users WHERE user_role = 'Employee'")
-    user_ids = cursor.fetchall()
-    for user_id in user_ids:
-        add_notification(user_id[0], notification_text)
-    conn.close()

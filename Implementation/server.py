@@ -8,6 +8,7 @@ from Employee import Employee
 from Cafeteria import Menu
 from Validation import Validation
 from Database import connect_to_db
+from notification import get_notifications
 
 def check_user_id_exists(user_id):
     conn = connect_to_db()
@@ -39,6 +40,12 @@ def handle_client(client_socket):
                     response = f"login_success,{user.user_id},{user.user_name},{user.user_role}"
                 else:
                     response = "login_failed,Invalid user ID or password."
+            elif command == 'get_notifications':
+                if user:
+                    notifications = get_notifications(user.user_id)
+                    response = '\n'.join(notifications) if notifications else "No new notifications."
+                else:
+                    response = "You need to log in first."
             elif user:
                 if user.user_role == 'Admin':
                     admin = Admin(user.user_id, user.user_name)
@@ -129,6 +136,9 @@ def handle_employee_commands(employee, command, params, menu):
         item_id = params[0]
         employee.select_preference(int(item_id))
         return "Preference selected successfully."
+    elif command == 'receive_notification':
+        notifications = employee.receive_notification()
+        return '\n'.join([str(notification) for notification in notifications])
     elif command == 'display_menu_item':
         return menu.display_menu_item()
     elif command == 'display_recommended_menu':
