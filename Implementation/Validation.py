@@ -1,13 +1,17 @@
-from Database import *
+from Database import connect_to_db
 
 class Validation:
     @staticmethod
     def check_menu_item_existance(item_name):
-        conn = connect_to_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT menu_item_id FROM MenuItems WHERE menu_item_name = %s", (item_name,))
-        item_id_list = cursor.fetchone()
-        if item_id_list:
-            return True
-        else:
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+            cursor.execute("SELECT menu_item_id FROM MenuItems WHERE menu_item_name = %s", (item_name,))
+            item_id_list = cursor.fetchone()
+            return bool(item_id_list)
+        except Exception as e:
+            print(f"An error occurred: {e}")
             return False
+        finally:
+            if 'conn' in locals():
+                conn.close()

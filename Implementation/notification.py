@@ -15,4 +15,5 @@ def get_notifications(user_id):
     cursor.execute("DELETE FROM Notifications WHERE user_id = %s", (user_id,))
     conn.commit()
     conn.close()
+    
     return [notification[0] for notification in notifications]

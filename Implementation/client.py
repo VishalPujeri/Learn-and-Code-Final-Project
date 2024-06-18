@@ -58,6 +58,36 @@ def handle_user_menu(client, user_role):
                 response = client.recv(4096).decode('utf-8')
                 print(f"Received response:\n {response}")
 
+            if user_role == 'Employee' and choice == '2':
+                client.send("display_ordered_items".encode('utf-8'))
+                response = client.recv(4096).decode('utf-8')
+                
+                item_id = input("Enter the ID of the food item you want to give feedback on: ")
+                comment = input("Enter your comment: ")
+                rating = input("Enter your rating (1-5): ")
+                command = f"provide_feedback,{item_id},{comment},{rating}"
+                client.send(command.encode('utf-8'))
+                response = client.recv(4096).decode('utf-8')
+                print(f"Received response:\n{response}")
+
+            if user_role == 'Employee' and choice == '3':
+                client.send("display_menu_item".encode('utf-8'))
+                response = client.recv(4096).decode('utf-8')
+                
+                item_id = input("Enter the ID of the food item you want to select as preference: ")
+                command = f"select_preference,{item_id}"
+                client.send(command.encode('utf-8'))
+                response = client.recv(4096).decode('utf-8')
+                print(f"Received response:\n{response}")
+
+            if user_role == 'Employee' and choice == '4':
+                item_id = input("Enter the ID of the food item you want to order: ")
+                quantity = input("Enter the quantity: ")
+                command = f"order_food_item,{item_id},{quantity}"
+                client.send(command.encode('utf-8'))
+                response = client.recv(4096).decode('utf-8')
+                print(f"Received response:\n{response}")
+
 def check_notifications(client):
     client.send("get_notifications".encode('utf-8'))
     response = client.recv(4096).decode('utf-8')
@@ -102,6 +132,7 @@ def translate_choice_to_command(user_role, choice):
             return "display_menu_item"
         elif choice == '6':
             return "logout"
+        
     elif user_role == 'Chef':
         commands = {
             '1': 'recommend_menu_items',
@@ -120,26 +151,23 @@ def translate_choice_to_command(user_role, choice):
             return "get_recommendations_from_feedback"
         elif choice == '5':
             return "logout"
+        
     elif user_role == 'Employee':
         commands = {
             '1': 'display_recommended_menu',
             '2': 'provide_feedback',
             '3': 'select_preference',
-            '4': 'receive_notification',
+            '4': 'order_food_item',
             '5': 'logout'
         }
         if choice == '1':
             return "display_recommended_menu"
         elif choice == '2':
-            item_id = input("Enter food item ID to provide feedback: ")
-            comment = input("Enter your comment: ")
-            rating = input("Enter your rating (1-5): ")
-            return f"provide_feedback,{item_id},{comment},{rating}"
+            return "display_ordered_items"
         elif choice == '3':
-            item_id = input("Enter food item ID to select as preference: ")
-            return f"select_preference,{item_id}"
+            return "display_menu_item"
         elif choice == '4':
-            return "receive_notification"
+            return "display_recommended_menu"
         elif choice == '5':
             return "logout"
     return None
@@ -166,7 +194,7 @@ def display_employee_menu():
     print("1. Show available food items")
     print("2. Provide Feedback")
     print("3. Select Preference")
-    print("4. Receive Notifications")
+    print("4. Order Food")
     print("5. Logout")
 
 if __name__ == "__main__":

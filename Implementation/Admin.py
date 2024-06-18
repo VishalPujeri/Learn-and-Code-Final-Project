@@ -16,7 +16,7 @@ class Admin(User):
             cursor.execute("INSERT INTO MenuItems (menu_item_name, price, availability) VALUES (%s, %s, %s)", 
                            (item.menu_item_name, item.price, item.availability))
             conn.commit()
-            # Notify all users about the new food item
+
             cursor.execute("SELECT user_id FROM Users WHERE user_role = 'Employee'")
             user_ids = cursor.fetchall()
             for user_id in user_ids:
@@ -24,7 +24,8 @@ class Admin(User):
         except Exception as e:
             print(f"An error occurred: {e}")
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()
 
     def update_menu_item(self, item_name, item_new_name, price, availability):
         try:
@@ -42,15 +43,20 @@ class Admin(User):
                         (item_new_name, price, availability, item_id)
                     )
                     conn.commit()
-                    # Notify all users about the food item status change
+
                     cursor.execute("SELECT user_id FROM Users WHERE user_role = 'Employee'")
                     user_ids = cursor.fetchall()
                     for user_id in user_ids:
                         add_notification(user_id[0], f"Food item updated: {item_name} to {item_new_name} with price {price}")
+                    return "Food item updated successfully."
+            else:
+                return "Item not available"
         except Exception as e:
             print(f"An error occurred: {e}")
+            return f"An error occurred: {e}"
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()
 
     def delete_menu_item(self, item_name):
         try:
@@ -60,12 +66,17 @@ class Admin(User):
                 cursor = conn.cursor()
                 cursor.execute("DELETE FROM MenuItems WHERE menu_item_name = %s", (item_name,))
                 conn.commit()
-                # Notify all users about the food item deletion
+
                 cursor.execute("SELECT user_id FROM Users WHERE user_role = 'Employee'")
                 user_ids = cursor.fetchall()
                 for user_id in user_ids:
                     add_notification(user_id[0], f"Food item deleted: {item_name}")
+                return "Food item deleted successfully."
+            else:
+                return "Item not available"
         except Exception as e:
             print(f"An error occurred: {e}")
+            return f"An error occurred: {e}"
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()

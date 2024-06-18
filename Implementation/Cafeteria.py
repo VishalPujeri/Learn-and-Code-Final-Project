@@ -39,6 +39,7 @@ class Menu:
         cursor.execute("SELECT menu_item_id, menu_item_name, price FROM MenuItems WHERE availability = '1'")
         food_items = cursor.fetchall()
         conn.close()
+
         display = f"{'Item ID':<10} {'Food Item':<20} {'Price':>10}\n" + "-" * 40 + "\n"
         for food_item in food_items:
             display += f"{food_item[0]:<10} {food_item[1]:<20} {food_item[2]:>10.2f}\n"
@@ -50,7 +51,10 @@ class Menu:
         cursor.execute("SELECT m.menu_item_id, m.menu_item_name, m.price FROM Recommendations r JOIN MenuItems m ON r.menu_item_id = m.menu_item_id WHERE m.availability = 1 AND date = CURRENT_DATE")
         food_items = cursor.fetchall()
         conn.close()
+        
         display = f"{'Item ID':<10} {'Food Item':<20} {'Price':>10}\n" + "-" * 40 + "\n"
         for food_item in food_items:
             display += f"{food_item[0]:<10} {food_item[1]:<20} {food_item[2]:>10.2f}\n"
         return display
+    
+    
