@@ -28,13 +28,16 @@ class Chef(User):
             cursor = conn.cursor()
             date = datetime.now().strftime("%Y-%m-%d")
             for item_id in item_ids:
-                cursor.execute("INSERT INTO Recommendations (menu_item_id, date, meal_type) VALUES (%s, %s, %s)", 
-                               (item_id, date, meal_type))
+                cursor.execute(
+                    "INSERT INTO Recommendations (menu_item_id, date, meal_type) VALUES (%s, %s, %s)", 
+                    (item_id, date, meal_type)
+                )
             conn.commit()
         except Exception as e:
             print(f"An error occurred: {e}")
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()
 
     def generate_recommendations_with_preferences(self):
         try:
@@ -93,17 +96,21 @@ class Chef(User):
         except Exception as e:
             print(f"An error occurred: {e}")
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()
         return report
 
     def get_recommendations_from_feedback(self):
         return self.generate_recommendations_with_preferences()
-    
+
     def generate_monthly_feedback_report(self):
         try:
             conn = connect_to_db()
             cursor = conn.cursor()
-            cursor.execute("SELECT menu_item_id, comment, rating, feedback_date FROM Feedback WHERE feedback_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 MONTH) AND NOW()")
+            cursor.execute(
+                "SELECT menu_item_id, comment, rating, feedback_date FROM Feedback "
+                "WHERE feedback_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 MONTH) AND NOW()"
+            )
             feedbacks = cursor.fetchall()
             conn.close()
             
