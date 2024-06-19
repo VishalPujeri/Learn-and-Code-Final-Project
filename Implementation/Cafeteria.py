@@ -48,7 +48,7 @@ class Menu:
         conn = connect_to_db()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT m.menu_item_id, m.menu_item_name, m.price "
+            "SELECT m.menu_item_id, m.menu_item_name, m.price, r.meal_type "
             "FROM Recommendations r "
             "JOIN MenuItems m ON r.menu_item_id = m.menu_item_id "
             "WHERE m.availability = 1 AND date = CURRENT_DATE"
@@ -56,7 +56,7 @@ class Menu:
         food_items = cursor.fetchall()
         conn.close()
 
-        display = f"{'Item ID':<10} {'Food Item':<20} {'Price':>10}\n" + "-" * 40 + "\n"
+        display = f"{'Item ID':<10} {'Food Item':<20} {'Price':>10} {'Meal Type':<15}\n" + "-" * 55 + "\n"
         for food_item in food_items:
-            display += f"{food_item[0]:<10} {food_item[1]:<20} {food_item[2]:>10.2f}\n"
+            display += f"{food_item[0]:<10} {food_item[1]:<20} {food_item[2]:>10.2f} {food_item[3]:<15}\n"
         return display

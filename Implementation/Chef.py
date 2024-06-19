@@ -2,6 +2,7 @@ from Database import connect_to_db
 from User import User
 from datetime import datetime
 from Cafeteria import MenuItem, Feedback
+from notification import add_notification
 
 def analyze_sentiment(comment):
     positive_words = ['good', 'great', 'excellent', 'positive', 'fortunate', 'correct', 'superior', 'amazing', 'happy', 'love', 'like']
@@ -33,6 +34,11 @@ class Chef(User):
                     (item_id, date, meal_type)
                 )
             conn.commit()
+
+            cursor.execute("SELECT user_id FROM Users WHERE user_role = 'Employee'")
+            user_ids = cursor.fetchall()
+            for user_id in user_ids:
+                add_notification(user_id[0], "New Menu for today is Rolled out, please click 1 to view")
         except Exception as e:
             print(f"An error occurred: {e}")
         finally:
