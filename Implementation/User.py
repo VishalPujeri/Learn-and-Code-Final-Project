@@ -1,7 +1,5 @@
 from Database import connect_to_db
-from Validation import Validation
-from Cafeteria import MenuItem, Feedback, Recommendation, UserPreference
-from datetime import datetime
+
 
 class User:
     def __init__(self, user_id, user_name, user_role):

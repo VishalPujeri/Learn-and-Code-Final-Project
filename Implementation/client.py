@@ -43,7 +43,7 @@ def handle_user_menu(client, user_role):
         if command:
             client.send(command.encode('utf-8'))
             response = client.recv(4096).decode('utf-8')
-            print(f"Received response:\n{response}")
+            print(f"\n{response}")
 
             if response == "logout_success":
                 print("Logged out successfully.")
@@ -56,7 +56,7 @@ def handle_user_menu(client, user_role):
                 command = f"recommend_menu_items,{meal_type},{number_of_items},{item_ids.replace(' ', '')}"
                 client.send(command.encode('utf-8'))
                 response = client.recv(4096).decode('utf-8')
-                print(f"Received response:\n{response}")
+                print(f"\n{response}")
 
             if user_role == 'Employee' and choice == '2':
                 client.send("display_ordered_items".encode('utf-8'))
@@ -68,7 +68,7 @@ def handle_user_menu(client, user_role):
                 command = f"provide_feedback,{item_id},{comment},{rating}"
                 client.send(command.encode('utf-8'))
                 response = client.recv(4096).decode('utf-8')
-                print(f"Received response:\n{response}")
+                print(f"\n{response}")
 
             if user_role == 'Employee' and choice == '3':
                 client.send("display_menu_items".encode('utf-8'))
@@ -78,7 +78,7 @@ def handle_user_menu(client, user_role):
                 command = f"select_preference,{item_id}"
                 client.send(command.encode('utf-8'))
                 response = client.recv(4096).decode('utf-8')
-                print(f"Received response:\n{response}")
+                print(f"\n{response}")
 
             if user_role == 'Employee' and choice == '4':
                 item_id = input("Enter the ID of the food item you want to order: ")
@@ -86,7 +86,7 @@ def handle_user_menu(client, user_role):
                 command = f"order_food_item,{item_id},{quantity}"
                 client.send(command.encode('utf-8'))
                 response = client.recv(4096).decode('utf-8')
-                print(f"Received response:\n{response}")
+                print(f"\n{response}")
 
 def check_notifications(client):
     client.send("get_notifications".encode('utf-8'))
