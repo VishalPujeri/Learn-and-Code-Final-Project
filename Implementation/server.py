@@ -1,5 +1,6 @@
 import socket
 import threading
+from datetime import datetime
 from User import User
 from Admin import Admin
 from Chef import Chef
@@ -66,6 +67,11 @@ def handle_client(client_socket):
                 elif user.user_role == 'Employee':
                     employee = Employee(user.user_id, user.user_name)
                     response = handle_employee_commands(employee, command, params, menu)
+
+                if command == 'logout':
+                    user.logout()
+                    response = "logout_success"
+                    user = None
             else:
                 response = "You need to log in first."
 
@@ -118,6 +124,9 @@ def handle_admin_commands(admin, command, params, menu):
 
         elif command == 'display_menu_items':
             return menu.display_menu_items()
+        
+        elif command == 'logout':
+            return "logout_success"
 
         else:
             return "Invalid admin command."
@@ -148,6 +157,19 @@ def handle_chef_commands(chef, command, params):
         elif command == 'display_menu_items':
             menu = Menu()
             return menu.display_menu_items()
+        
+        elif command == 'display_ordered_items':
+            return chef.display_ordered_items()
+        
+        elif command == 'view_discard_menu_item_list':
+            return chef.view_discard_menu_item_list()
+        
+        elif command == 'delete_menu_item':
+            if len(params) < 1:
+                return "error,Not enough parameters for delete_menu_item"
+            item_id = params[0]
+            Chef.delete_menu_item(int(item_id))
+            return f"Food item with ID {item_id} deleted successfully."
 
         elif command == 'logout':
             return "logout_success"

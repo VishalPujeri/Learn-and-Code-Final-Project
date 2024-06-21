@@ -1,5 +1,8 @@
 from Database import connect_to_db
-
+from Validation import Validation
+from Cafeteria import MenuItem, Feedback, Recommendation, UserPreference
+from datetime import datetime
+from logger import log_activity
 
 class User:
     def __init__(self, user_id, user_name, user_role):
@@ -18,6 +21,7 @@ class User:
             )
             user = cursor.fetchone()
             if user:
+                log_activity(user_id, 'login')
                 return User(user[0], user[1], user[2])
             return None
         except Exception as e:
@@ -42,3 +46,6 @@ class User:
         finally:
             if 'conn' in locals():
                 conn.close()
+
+    def logout(self):
+        log_activity(self.user_id, 'logout')

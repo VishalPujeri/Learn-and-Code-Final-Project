@@ -60,3 +60,4 @@ class Menu:
         for food_item in food_items:
             display += f"{food_item[0]:<10} {food_item[1]:<20} {food_item[2]:>10.2f} {food_item[3]:<15}\n"
         return display
+    

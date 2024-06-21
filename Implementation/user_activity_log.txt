@@ -1,0 +1,8 @@
+2024-06-21 08:45:15 - User ID: Vishu12 - Action: login
+2024-06-21 08:45:22 - User ID: Vishu12 - Action: logout
+2024-06-21 08:45:33 - User ID: 22 - Action: login
+2024-06-21 08:45:36 - User ID: 22 - Action: logout
+2024-06-21 08:45:41 - User ID: 33 - Action: login
+2024-06-21 08:45:43 - User ID: 33 - Action: logout
+2024-06-21 09:00:03 - User ID: 22 - Action: login
+2024-06-21 09:03:59 - User ID: 22 - Action: login

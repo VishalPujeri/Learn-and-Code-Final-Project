@@ -50,36 +50,37 @@ class Chef(User):
             conn = connect_to_db()
             cursor = conn.cursor()
 
-            cursor.execute("SELECT menu_item_id, comment FROM Feedback")
+            cursor.execute("SELECT menu_item_id, comment, rating FROM Feedback")
             feedback_data = cursor.fetchall()
 
             sentiment_scores = {}
             sentiment_counts = {}
+            ratings = {}
 
             for feedback in feedback_data:
                 menu_item_id = feedback[0]
                 comment = feedback[1]
-                sentiment_score = analyze_sentiment(comment)
+                rating = feedback[2]
+                sentiment_score = self.analyze_sentiment(comment)
 
                 if menu_item_id in sentiment_scores:
                     sentiment_scores[menu_item_id] += sentiment_score
                     sentiment_counts[menu_item_id] += 1
+                    ratings[menu_item_id].append(rating)
                 else:
                     sentiment_scores[menu_item_id] = sentiment_score
                     sentiment_counts[menu_item_id] = 1
+                    ratings[menu_item_id] = [rating]
 
             average_sentiments = {item: sentiment_scores[item] / sentiment_counts[item] for item in sentiment_scores}
-
-            cursor.execute("SELECT menu_item_id, COUNT(*) as preference_count FROM UserPreference GROUP BY menu_item_id")
-            preference_data = cursor.fetchall()
-
-            preference_scores = {item[0]: item[1] for item in preference_data}
+            average_ratings = {item: sum(ratings[item]) / len(ratings[item]) for item in ratings}
 
             combined_scores = {}
-            for menu_item_id in set(list(average_sentiments.keys()) + list(preference_scores.keys())):
+            for menu_item_id in average_sentiments:
                 sentiment_score = average_sentiments.get(menu_item_id, 0)
-                preference_score = preference_scores.get(menu_item_id, 0)
-                combined_scores[menu_item_id] = sentiment_score + preference_score
+                rating = average_ratings.get(menu_item_id, 0)
+                combined_score = (sentiment_score + rating) / 2
+                combined_scores[menu_item_id] = combined_score
 
             top_recommendations = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)
             top_n = 5
@@ -102,9 +103,28 @@ class Chef(User):
         except Exception as e:
             print(f"An error occurred: {e}")
         finally:
-            if 'conn' in locals():
-                conn.close()
+            conn.close()
         return report
+
+    def analyze_sentiment(self, comment):
+        positive_words = ['good', 'great', 'excellent', 'positive', 'fortunate', 'correct', 'superior', 'amazing', 'happy', 'love', 'like']
+        negative_words = ['bad', 'terrible', 'poor', 'negative', 'unfortunate', 'wrong', 'inferior', 'awful', 'sad', 'hate', 'dislike']
+        
+        words = comment.lower().split()
+        sentiment_score = 0
+        
+        for word in words:
+            if word in positive_words:
+                sentiment_score += 1
+            elif word in negative_words:
+                sentiment_score -= 1
+
+        max_score = 5
+        normalized_sentiment_score = (sentiment_score / max_score) * 5
+
+        normalized_sentiment_score = min(max(normalized_sentiment_score, 0), 5)
+
+        return normalized_sentiment_score
 
     def get_recommendations_from_feedback(self):
         return self.generate_recommendations_with_preferences()
@@ -128,3 +148,95 @@ class Chef(User):
         except Exception as e:
             print(f"An error occurred: {e}")
         return report
+    
+    def display_ordered_items(self):
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT Orders.menu_item_id, MenuItems.menu_item_name, Orders.order_date, Orders.quantity "
+                "FROM Orders "
+                "JOIN MenuItems ON Orders.menu_item_id = MenuItems.menu_item_id "
+                "WHERE Orders.order_date = CURRENT_DATE"
+            )
+            ordered_items = cursor.fetchall()
+            conn.close()
+
+            display = f"{'Item ID':<10} {'Food Item':<20} {'Quantity':<10}\n" + "-" * 50 + "\n"
+            for item in ordered_items:
+                display += f"{item[0]:<10} {item[1]:<20} {item[3]:<10}\n"
+            return display
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return f"An error occurred: {e}"
+        
+    def view_discard_menu_item_list(self):
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+        
+            cursor.execute("SELECT menu_item_id, comment, rating FROM Feedback")
+            feedback_data = cursor.fetchall()
+        
+            if not feedback_data:
+                return "No feedback found."
+        
+            sentiment_scores = {}
+            sentiment_counts = {}
+            ratings = {}
+
+            for feedback in feedback_data:
+                menu_item_id = feedback[0]
+                comment = feedback[1]
+                rating = feedback[2]
+                sentiment_score = self.analyze_sentiment(comment)  # Ensure analyze_sentiment method is defined
+
+                if menu_item_id in sentiment_scores:
+                    sentiment_scores[menu_item_id] += sentiment_score
+                    sentiment_counts[menu_item_id] += 1
+                    ratings[menu_item_id].append(rating)
+                else:
+                    sentiment_scores[menu_item_id] = sentiment_score
+                    sentiment_counts[menu_item_id] = 1
+                    ratings[menu_item_id] = [rating]
+
+            average_sentiments = {item: sentiment_scores[item] / sentiment_counts[item] for item in sentiment_scores}
+            average_ratings = {item: sum(ratings[item]) / len(ratings[item]) for item in ratings}
+
+            combined_scores = {}
+            for menu_item_id in average_sentiments:
+                sentiment_score = average_sentiments.get(menu_item_id, 0)
+                rating = average_ratings.get(menu_item_id, 0)
+                combined_score = (sentiment_score + rating) / 2
+                combined_scores[menu_item_id] = combined_score
+
+            low_rated_items = {item: score for item, score in combined_scores.items() if score < 2}
+
+            if not low_rated_items:
+                return "No low rated items found."
+        
+            display = "Low rated items:\n"
+            display += f"{'Item ID':<10} {'Average Score':<15}\n" + "-" * 25 + "\n"
+            for item_id, avg_score in low_rated_items.items():
+                display += f"{item_id:<10} {avg_score:<15.2f}\n"
+            display += "Do you want to delete these items? (yes/no): "
+        
+            return display
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return f"An error occurred: {e}"
+        finally:
+            if 'conn' in locals():
+                conn.close()
+
+    def delete_menu_item(item_id):
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM MenuItems WHERE menu_item_id = %s", (item_id,))
+            conn.commit()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            if 'conn' in locals():
+                conn.close()

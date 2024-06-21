@@ -36,14 +36,14 @@ def handle_user_menu(client, user_role):
         check_notifications(client)
 
         choice = input("Enter your choice: ")
-        if choice not in ['1', '2', '3', '4', '5']:
+        if choice not in ['1', '2', '3', '4', '5','6', '7']:
             break
 
         command = translate_choice_to_command(user_role, choice)
         if command:
             client.send(command.encode('utf-8'))
             response = client.recv(4096).decode('utf-8')
-            print(f"\n{response}")
+            print(f"{response}")
 
             if response == "logout_success":
                 print("Logged out successfully.")
@@ -56,7 +56,7 @@ def handle_user_menu(client, user_role):
                 command = f"recommend_menu_items,{meal_type},{number_of_items},{item_ids.replace(' ', '')}"
                 client.send(command.encode('utf-8'))
                 response = client.recv(4096).decode('utf-8')
-                print(f"\n{response}")
+                print(f"{response}")
 
             if user_role == 'Employee' and choice == '2':
                 client.send("display_ordered_items".encode('utf-8'))
@@ -68,7 +68,7 @@ def handle_user_menu(client, user_role):
                 command = f"provide_feedback,{item_id},{comment},{rating}"
                 client.send(command.encode('utf-8'))
                 response = client.recv(4096).decode('utf-8')
-                print(f"\n{response}")
+                print(f"{response}")
 
             if user_role == 'Employee' and choice == '3':
                 client.send("display_menu_items".encode('utf-8'))
@@ -78,7 +78,7 @@ def handle_user_menu(client, user_role):
                 command = f"select_preference,{item_id}"
                 client.send(command.encode('utf-8'))
                 response = client.recv(4096).decode('utf-8')
-                print(f"\n{response}")
+                print(f"{response}")
 
             if user_role == 'Employee' and choice == '4':
                 item_id = input("Enter the ID of the food item you want to order: ")
@@ -86,7 +86,32 @@ def handle_user_menu(client, user_role):
                 command = f"order_food_item,{item_id},{quantity}"
                 client.send(command.encode('utf-8'))
                 response = client.recv(4096).decode('utf-8')
-                print(f"\n{response}")
+                print(f"{response}")
+
+            if user_role == 'Chef' and choice == '6':
+                client.send("view_discard_menu_item_list".encode('utf-8'))
+                response = client.recv(4096).decode('utf-8')
+                if response.startswith("Low rated items:"):
+                    delete_choice = input()
+                    if delete_choice.lower() == "yes":
+                        item_id = input("Enter the ID of the food item you want to delete: ")
+                        client.send(f"delete_menu_item,{item_id}".encode('utf-8'))
+                        delete_response = client.recv(4096).decode('utf-8')
+                        print(f"\n{delete_response}")
+
+def handle_view_discard_menu_item_list(client):
+    client.send("view_discard_menu_item_list".encode('utf-8'))
+    response = client.recv(4096).decode('utf-8')
+    if response.startswith("Low rated items:"):
+        print(response)
+        delete_choice = input("Do you want to delete these items? (yes/no): ")
+        if delete_choice.lower() == "yes":
+            item_id = input("Enter the ID of the food item you want to delete: ")
+            client.send(f"delete_menu_item,{item_id}".encode('utf-8'))
+            delete_response = client.recv(4096).decode('utf-8')
+            return delete_response
+    return response
+
 
 def check_notifications(client):
     client.send("get_notifications".encode('utf-8'))
@@ -139,7 +164,9 @@ def translate_choice_to_command(user_role, choice):
             '2': 'generate_monthly_feedback_report',
             '3': 'display_menu_items',
             '4': 'get_recommendations_from_feedback',
-            '5': 'logout'
+            '5': 'display_ordered_items',
+            '6': 'view_discard_menu_item_list',
+            '7': 'logout'
         }
         if choice == '1':
             return "get_recommendations_from_feedback"
@@ -150,6 +177,10 @@ def translate_choice_to_command(user_role, choice):
         elif choice == '4':
             return "get_recommendations_from_feedback"
         elif choice == '5':
+            return "display_ordered_items"
+        elif choice == '6':
+            return "view_discard_menu_item_list"
+        elif choice == '7':
             return "logout"
 
     elif user_role == 'Employee':
@@ -187,7 +218,9 @@ def display_chef_menu():
     print("2. Generate Monthly Feedback Report")
     print("3. Show available food items")
     print("4. Get Recommendations from Feedback")
-    print("5. Logout")
+    print("5. View Ordered Items")
+    print("6. View Discard Menu Item List")
+    print("7. Logout")
 
 def display_employee_menu():
     print("\nEmployee Menu:")
