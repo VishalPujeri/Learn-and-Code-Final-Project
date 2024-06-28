@@ -111,3 +111,23 @@ class Employee(User):
         except Exception as e:
             print(f"An error occurred: {e}")
             return f"An error occurred: {e}"
+        
+    def submit_detailed_feedback(self, feedback_id, response_1, response_2, response_3):
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+        
+            cursor.execute(
+                "UPDATE DetailedFeedback SET response_1 = %s, response_2 = %s, response_3 = %s WHERE feedback_id = %s",
+                (response_1, response_2, response_3, feedback_id)
+            )
+        
+            conn.commit()
+            return "Feedback submitted successfully."
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return f"An error occurred: {e}"
+        finally:
+            if 'conn' in locals():
+                conn.close()
+

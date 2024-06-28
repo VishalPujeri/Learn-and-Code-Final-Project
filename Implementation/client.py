@@ -166,7 +166,8 @@ def translate_choice_to_command(user_role, choice):
             '4': 'get_recommendations_from_feedback',
             '5': 'display_ordered_items',
             '6': 'view_discard_menu_item_list',
-            '7': 'logout'
+            '7': 'roll_out_feedback_request',
+            '8': 'logout'
         }
         if choice == '1':
             return "get_recommendations_from_feedback"
@@ -181,6 +182,12 @@ def translate_choice_to_command(user_role, choice):
         elif choice == '6':
             return "view_discard_menu_item_list"
         elif choice == '7':
+            menu_item_id = input("Enter the menu item ID for feedback request: ")
+            question_1 = input("Enter the first question: ")
+            question_2 = input("Enter the second question: ")
+            question_3 = input("Enter the third question: ")
+            return f"roll_out_feedback_request,{menu_item_id},{question_1},{question_2},{question_3}"
+        elif choice == '8':
             return "logout"
 
     elif user_role == 'Employee':
@@ -189,7 +196,8 @@ def translate_choice_to_command(user_role, choice):
             '2': 'provide_feedback',
             '3': 'select_preference',
             '4': 'order_food_item',
-            '5': 'logout'
+            '5': 'submit_detailed_feedback',
+            '6': 'logout'
         }
         if choice == '1':
             return "display_recommended_menu"
@@ -200,6 +208,12 @@ def translate_choice_to_command(user_role, choice):
         elif choice == '4':
             return "display_recommended_menu"
         elif choice == '5':
+            feedback_id = input("Enter the feedback ID: ")
+            response_1 = input("Enter your response to question 1: ")
+            response_2 = input("Enter your response to question 2: ")
+            response_3 = input("Enter your response to question 3: ")
+            return f"submit_detailed_feedback,{feedback_id},{response_1},{response_2},{response_3}"
+        elif choice == '6':
             return "logout"
     return None
 
@@ -220,7 +234,8 @@ def display_chef_menu():
     print("4. Get Recommendations from Feedback")
     print("5. View Ordered Items")
     print("6. View Discard Menu Item List")
-    print("7. Logout")
+    print("7. Roll Out Feedback Request")
+    print("8. Logout")
 
 def display_employee_menu():
     print("\nEmployee Menu:")
@@ -228,7 +243,8 @@ def display_employee_menu():
     print("2. Provide Feedback")
     print("3. Select Preference")
     print("4. Order Food")
-    print("5. Logout")
+    print("5. Submit Detailed Feedback")
+    print("6. Logout")
 
 if __name__ == "__main__":
     main()

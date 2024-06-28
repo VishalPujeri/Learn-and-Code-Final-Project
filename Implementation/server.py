@@ -170,7 +170,15 @@ def handle_chef_commands(chef, command, params):
             item_id = params[0]
             Chef.delete_menu_item(int(item_id))
             return f"Food item with ID {item_id} deleted successfully."
+        
+        elif command == 'roll_out_feedback_request':
+            if len(params) < 4:
+                return "error,Not enough parameters for roll_out_feedback_request"
 
+            menu_item_id, question_1, question_2, question_3 = params
+            response = chef.roll_out_feedback_request(int(menu_item_id), question_1, question_2, question_3)
+            return response
+        
         elif command == 'logout':
             return "logout_success"
 
@@ -217,6 +225,14 @@ def handle_employee_commands(employee, command, params, menu):
 
         elif command == 'display_ordered_items':
             return employee.display_ordered_items()
+        
+        elif command == 'submit_detailed_feedback':
+            if len(params) < 4:
+                return "error,Not enough parameters for submit_detailed_feedback"
+            
+            feedback_id, response_1, response_2, response_3 = params
+            response = employee.submit_detailed_feedback(int(feedback_id), response_1, response_2, response_3)
+            return response
 
         elif command == 'logout':
             return "logout_success"

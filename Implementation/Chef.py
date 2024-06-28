@@ -3,6 +3,7 @@ from User import User
 from datetime import datetime
 from Cafeteria import MenuItem, Feedback
 from notification import add_notification
+from Exception import DatabaseConnectionError, InvalidInputError, ItemNotFoundError, NotificationError
 
 def analyze_sentiment(comment):
     positive_words = ['good', 'great', 'excellent', 'positive', 'fortunate', 'correct', 'superior', 'amazing', 'happy', 'love', 'like']
@@ -24,6 +25,9 @@ class Chef(User):
         super().__init__(user_id, user_name, 'Chef')
 
     def recommend_menu_items(self, meal_type, number_of_items, item_ids):
+        if not item_ids or not isinstance(number_of_items, int):
+            raise InvalidInputError("Invalid input for item recommendations.")
+        
         try:
             conn = connect_to_db()
             cursor = conn.cursor()
@@ -40,7 +44,7 @@ class Chef(User):
             for user_id in user_ids:
                 add_notification(user_id[0], "New Menu for today is Rolled out, please click 1 to view")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            raise DatabaseConnectionError(f"Database connection error: {e}")
         finally:
             if 'conn' in locals():
                 conn.close()
@@ -100,8 +104,9 @@ class Chef(User):
                 combined_score = recommendation[1]
                 menu_item_name = menu_item_names.get(menu_item_id, "Unknown Item")
                 report += f"{menu_item_id:<15} {menu_item_name:<25} {combined_score:>15.2f}\n"
+                
         except Exception as e:
-            print(f"An error occurred: {e}")
+            raise DatabaseConnectionError(f"Database connection error: {e}")
         finally:
             conn.close()
         return report
@@ -146,7 +151,7 @@ class Chef(User):
                 formatted_date = feedback_date.strftime("%Y-%m-%d")
                 report += f"{menu_item_id:<15} {comment:<50} {rating:<10} {formatted_date:<15}\n"
         except Exception as e:
-            print(f"An error occurred: {e}")
+            raise DatabaseConnectionError(f"Database connection error: {e}")
         return report
     
     def display_ordered_items(self):
@@ -167,8 +172,7 @@ class Chef(User):
                 display += f"{item[0]:<10} {item[1]:<20} {item[3]:<10}\n"
             return display
         except Exception as e:
-            print(f"An error occurred: {e}")
-            return f"An error occurred: {e}"
+            raise DatabaseConnectionError(f"Database connection error: {e}")
         
     def view_discard_menu_item_list(self):
         try:
@@ -189,8 +193,7 @@ class Chef(User):
                 menu_item_id = feedback[0]
                 comment = feedback[1]
                 rating = feedback[2]
-                sentiment_score = self.analyze_sentiment(comment)  # Ensure analyze_sentiment method is defined
-
+                sentiment_score = self.analyze_sentiment(comment)
                 if menu_item_id in sentiment_scores:
                     sentiment_scores[menu_item_id] += sentiment_score
                     sentiment_counts[menu_item_id] += 1
@@ -223,11 +226,11 @@ class Chef(User):
         
             return display
         except Exception as e:
-            print(f"An error occurred: {e}")
-            return f"An error occurred: {e}"
+            raise DatabaseConnectionError(f"Database connection error: {e}")
         finally:
             if 'conn' in locals():
                 conn.close()
+
 
     def delete_menu_item(item_id):
         try:
@@ -236,7 +239,32 @@ class Chef(User):
             cursor.execute("DELETE FROM MenuItems WHERE menu_item_id = %s", (item_id,))
             conn.commit()
         except Exception as e:
-            print(f"An error occurred: {e}")
+            raise DatabaseConnectionError(f"Database connection error: {e}")
+        finally:
+            if 'conn' in locals():
+                conn.close()
+
+    def roll_out_feedback_request(self, menu_item_id, question_1, question_2, question_3):
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+            feedback_date = datetime.now().strftime("%Y-%m-%d")
+        
+            cursor.execute("SELECT user_id FROM Users WHERE user_role = 'Employee'")
+            user_ids = cursor.fetchall()
+
+            for user_id in user_ids:
+                cursor.execute(
+                    "INSERT INTO DetailedFeedback (menu_item_id, user_id, question_1, question_2, question_3, feedback_date) "
+                    "VALUES (%s, %s, %s, %s, %s, %s)",
+                    (menu_item_id, user_id[0], question_1, question_2, question_3, feedback_date)
+                )
+                add_notification(user_id[0], f"We are trying to improve your experience with <Food Item>. Please provide your feedback and help us.\nQ1. {question_1}\nQ2. {question_2}\nQ3. {question_3}")
+
+            conn.commit()
+            return "Feedback request rolled out successfully."
+        except Exception as e:
+            raise DatabaseConnectionError(f"Database connection error: {e}")
         finally:
             if 'conn' in locals():
                 conn.close()
