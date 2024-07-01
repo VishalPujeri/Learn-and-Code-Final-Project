@@ -1,8 +1,7 @@
 from Database import connect_to_db
 from Validation import Validation
-from Cafeteria import MenuItem, Feedback, Recommendation, UserPreference
-from datetime import datetime
 from logger import log_activity
+from Exception import DatabaseConnectionError, InvalidInputError
 
 class User:
     def __init__(self, user_id, user_name, user_role):
@@ -25,13 +24,16 @@ class User:
                 return User(user[0], user[1], user[2])
             return None
         except Exception as e:
-            print(f"An error occurred: {e}")
+            raise DatabaseConnectionError(f"Database connection error: {e}")
         finally:
             if 'conn' in locals():
                 conn.close()
 
     @staticmethod
     def register(user_id, user_name, user_role, user_password):
+        if not user_id or not user_name or not user_role or not user_password:
+            raise InvalidInputError("All user details must be provided for registration.")
+        
         try:
             conn = connect_to_db()
             cursor = conn.cursor()
@@ -42,7 +44,7 @@ class User:
             conn.commit()
             return User(user_id, user_name, user_role)
         except Exception as e:
-            print(f"An error occurred: {e}")
+            raise DatabaseConnectionError(f"Database connection error: {e}")
         finally:
             if 'conn' in locals():
                 conn.close()

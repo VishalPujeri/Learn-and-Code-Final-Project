@@ -1,12 +1,16 @@
 from Database import connect_to_db
 from datetime import datetime
+from MenuSorter import MenuSorter
 
 class MenuItem:
-    def __init__(self, menu_item_id, menu_item_name, price, availability):
+    def __init__(self, menu_item_id, menu_item_name, price, availability, food_type, spice_level, is_sweet):
         self.menu_item_id = menu_item_id
         self.menu_item_name = menu_item_name
         self.price = price
         self.availability = availability
+        self.food_type = food_type
+        self.spice_level = spice_level
+        self.is_sweet = is_sweet
 
 class Feedback:
     def __init__(self, feedback_id, menu_item_id, user_id, comment, rating, feedback_date):
@@ -44,17 +48,20 @@ class Menu:
             display += f"{food_item[0]:<10} {food_item[1]:<20} {food_item[2]:>10.2f}\n"
         return display
 
-    def display_recommended_menu(self):
+    def display_recommended_menu(self, preferences=None):
         conn = connect_to_db()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT m.menu_item_id, m.menu_item_name, m.price, r.meal_type "
+            "SELECT m.menu_item_id, m.menu_item_name, m.price, r.meal_type, m.food_type, m.spice_level, m.is_sweet "
             "FROM Recommendations r "
             "JOIN MenuItems m ON r.menu_item_id = m.menu_item_id "
             "WHERE m.availability = 1 AND date = CURRENT_DATE"
         )
         food_items = cursor.fetchall()
         conn.close()
+
+        if preferences:
+            food_items = MenuSorter.sort_menu_items(food_items, preferences)
 
         display = f"{'Item ID':<10} {'Food Item':<20} {'Price':>10} {'Meal Type':<15}\n" + "-" * 55 + "\n"
         for food_item in food_items:

@@ -1,4 +1,5 @@
 from Database import connect_to_db
+from Exception import DatabaseConnectionError, NotificationError
 
 def add_notification(user_id, notification_text):
     try:
@@ -10,7 +11,7 @@ def add_notification(user_id, notification_text):
         )
         conn.commit()
     except Exception as e:
-        print(f"An error occurred: {e}")
+        raise NotificationError(f"Failed to add notification: {e}")
     finally:
         if 'conn' in locals():
             conn.close()
@@ -25,8 +26,7 @@ def get_notifications(user_id):
         conn.commit()
         return [notification[0] for notification in notifications]
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return []
+        raise NotificationError(f"Failed to get notifications: {e}")
     finally:
         if 'conn' in locals():
             conn.close()

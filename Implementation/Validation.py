@@ -1,4 +1,5 @@
 from Database import connect_to_db
+from Exception import DatabaseConnectionError
 
 class Validation:
     @staticmethod
@@ -10,8 +11,7 @@ class Validation:
             item_id = cursor.fetchone()
             return bool(item_id)
         except Exception as e:
-            print(f"An error occurred: {e}")
-            return False
+            raise DatabaseConnectionError(f"Database connection error: {e}")
         finally:
             if 'conn' in locals():
                 conn.close()

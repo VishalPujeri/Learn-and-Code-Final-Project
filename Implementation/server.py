@@ -9,6 +9,7 @@ from Cafeteria import Menu
 from Validation import Validation
 from Database import connect_to_db
 from notification import get_notifications
+from Exception import DatabaseConnectionError, CafeteriaError
 
 def check_user_id_exists(user_id):
     try:
@@ -18,8 +19,7 @@ def check_user_id_exists(user_id):
         user = cursor.fetchone()
         return bool(user)
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return False
+        raise DatabaseConnectionError(f"Database connection error: {e}")
     finally:
         if 'conn' in locals():
             conn.close()
@@ -76,8 +76,12 @@ def handle_client(client_socket):
                 response = "You need to log in first."
 
             client_socket.send(response.encode('utf-8'))
+        except CafeteriaError as e:
+            response = f"Error: {e}"
+            print(response)
+            client_socket.send(response.encode('utf-8'))
         except Exception as e:
-            response = f"An error occurred: {e}"
+            response = f"An unexpected error occurred: {e}"
             print(response)
             client_socket.send(response.encode('utf-8'))
 
@@ -99,19 +103,19 @@ def handle_admin_commands(admin, command, params, menu):
             return "Registration successful."
 
         elif command == 'add_menu_item':
-            if len(params) < 3:
+            if len(params) < 6:
                 return "error,Not enough parameters for add_menu_item"
 
-            name, price, availability = params
-            admin.add_menu_item(name, float(price), int(availability))
+            name, price, availability, food_type, spice_level, is_sweet = params
+            admin.add_menu_item(name, float(price), int(availability), food_type, spice_level, is_sweet)
             return "Food item added successfully."
 
         elif command == 'update_menu_item':
-            if len(params) < 4:
+            if len(params) < 7:
                 return "error,Not enough parameters for update_menu_item"
 
-            item_name, item_new_name, price, availability = params
-            response = admin.update_menu_item(item_name, item_new_name, float(price), int(availability))
+            item_name, item_new_name, price, availability, food_type, spice_level, is_sweet = params
+            response = admin.update_menu_item(item_name, item_new_name, float(price), int(availability), food_type, spice_level, is_sweet)
             return response
 
         elif command == 'delete_menu_item':
@@ -132,9 +136,10 @@ def handle_admin_commands(admin, command, params, menu):
             return "Invalid admin command."
     except ValueError:
         return "Invalid input. Please check your parameters."
+    except CafeteriaError as e:
+        return f"Error: {e}"
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return f"An error occurred: {e}"
+        return f"An unexpected error occurred: {e}"
 
 def handle_chef_commands(chef, command, params):
     print(f"Handling chef command: {command} with params: {params}")
@@ -152,7 +157,7 @@ def handle_chef_commands(chef, command, params):
             return chef.generate_monthly_feedback_report()
 
         elif command == 'get_recommendations_from_feedback':
-            return chef.get_recommendations_from_feedback()
+            return chef.generate_recommendations_with_preferences()
 
         elif command == 'display_menu_items':
             menu = Menu()
@@ -186,9 +191,10 @@ def handle_chef_commands(chef, command, params):
             return "Invalid chef command."
     except ValueError:
         return "Invalid input. Please check your parameters."
+    except CafeteriaError as e:
+        return f"Error: {e}"
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return f"An error occurred: {e}"
+        return f"An unexpected error occurred: {e}"
 
 def handle_employee_commands(employee, command, params, menu):
     print(f"Handling employee command: {command} with params: {params}")
@@ -212,8 +218,8 @@ def handle_employee_commands(employee, command, params, menu):
         elif command == 'display_menu_items':
             return menu.display_menu_items()
 
-        elif command == 'display_recommended_menu':
-            return menu.display_recommended_menu()
+        if command == 'display_recommended_menu':
+            return employee.display_recommended_menu()
         
         elif command == 'order_food_item':
             if len(params) < 2:
@@ -233,6 +239,14 @@ def handle_employee_commands(employee, command, params, menu):
             feedback_id, response_1, response_2, response_3 = params
             response = employee.submit_detailed_feedback(int(feedback_id), response_1, response_2, response_3)
             return response
+        
+        elif command == 'update_profile':
+            if len(params) < 4:
+                return "error,Not enough parameters for update_profile"
+
+            dietary_preference, spice_level, cuisine_preference, sweet_tooth = params
+            response = employee.update_profile(dietary_preference, spice_level, cuisine_preference, sweet_tooth)
+            return response
 
         elif command == 'logout':
             return "logout_success"
@@ -241,9 +255,10 @@ def handle_employee_commands(employee, command, params, menu):
             return "Invalid employee command."
     except ValueError:
         return "Invalid input. Please check your parameters."
+    except CafeteriaError as e:
+        return f"Error: {e}"
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return f"An error occurred: {e}"
+        return f"An unexpected error occurred: {e}"
 
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
