@@ -1,6 +1,6 @@
-from Database import connect_to_db
+from data.Database import connect_to_db
 from datetime import datetime
-from Cafeteria import UserPreference
+from core.Cafeteria import UserPreference
 
 class PreferenceHandler:
     def __init__(self, user_id):

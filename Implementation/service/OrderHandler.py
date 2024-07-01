@@ -1,4 +1,4 @@
-from Database import connect_to_db
+from data.Database import connect_to_db
 from datetime import datetime
 
 class OrderHandler:

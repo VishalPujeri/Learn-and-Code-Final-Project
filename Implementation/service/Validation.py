@@ -1,5 +1,5 @@
-from Database import connect_to_db
-from Exception import DatabaseConnectionError
+from data.Database import connect_to_db
+from core.Exception import DatabaseConnectionError
 
 class Validation:
     @staticmethod

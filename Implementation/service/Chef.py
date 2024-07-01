@@ -1,7 +1,7 @@
-from User import User
-from DatabaseOperations import DatabaseOperations
-from RecommendationGenerator import RecommendationGenerator
-from FeedbackAnalyzer import FeedbackAnalyzer
+from core.User import User
+from data.DatabaseOperations import DatabaseOperations
+from service.RecommendationGenerator import RecommendationGenerator
+from service.FeedbackAnalyzer import FeedbackAnalyzer
 from datetime import datetime
 
 class Chef(User):

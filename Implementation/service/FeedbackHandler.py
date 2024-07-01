@@ -1,6 +1,6 @@
-from Database import connect_to_db
+from data.Database import connect_to_db
 from datetime import datetime
-from Cafeteria import Feedback
+from core.Cafeteria import Feedback
 
 class FeedbackHandler:
     def __init__(self, user_id):

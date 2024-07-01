@@ -1,6 +1,6 @@
-from Database import connect_to_db
+from data.Database import connect_to_db
 from datetime import datetime
-from notification import add_notification
+from notification.notification import add_notification
 
 class DatabaseOperations:
     def recommend_menu_items(self, meal_type, number_of_items, item_ids):

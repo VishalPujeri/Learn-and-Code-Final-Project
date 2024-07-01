@@ -1,10 +1,10 @@
-from User import User
-from FeedbackHandler import FeedbackHandler
-from PreferenceHandler import PreferenceHandler
-from OrderHandler import OrderHandler
-from DatabaseOperations import DatabaseOperations
-from Cafeteria import Menu
-from ProfileHandler import ProfileHandler
+from core.User import User
+from service.FeedbackHandler import FeedbackHandler
+from service.PreferenceHandler import PreferenceHandler
+from service.OrderHandler import OrderHandler
+from data.DatabaseOperations import DatabaseOperations
+from core.Cafeteria import Menu
+from service.ProfileHandler import ProfileHandler
 
 class Employee(User):
     def __init__(self, user_id, user_name):

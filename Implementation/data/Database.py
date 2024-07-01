@@ -1,5 +1,5 @@
 import mysql.connector
-from Exception import DatabaseConnectionError
+from core.Exception import DatabaseConnectionError
 
 def connect_to_db():
     try:

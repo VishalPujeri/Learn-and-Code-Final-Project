@@ -1,15 +1,15 @@
 import socket
 import threading
 from datetime import datetime
-from User import User
-from Admin import Admin
-from Chef import Chef
-from Employee import Employee
-from Cafeteria import Menu
-from Validation import Validation
-from Database import connect_to_db
-from notification import get_notifications
-from Exception import DatabaseConnectionError, CafeteriaError
+from core.User import User
+from service.Admin import Admin
+from service.Chef import Chef
+from service.Employee import Employee
+from core.Cafeteria import Menu
+from service.Validation import Validation
+from data.Database import connect_to_db
+from notification.notification import get_notifications
+from core.Exception import DatabaseConnectionError, CafeteriaError
 
 def check_user_id_exists(user_id):
     try:

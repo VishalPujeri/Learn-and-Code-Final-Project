@@ -1,9 +1,9 @@
-from Database import connect_to_db
-from User import User
-from Cafeteria import MenuItem
-from Validation import Validation
-from notification import add_notification
-from Exception import DatabaseConnectionError, InvalidInputError, ItemNotFoundError, NotificationError
+from data.Database import connect_to_db
+from core.User import User
+from core.Cafeteria import MenuItem
+from service.Validation import Validation
+from notification.notification import add_notification
+from core.Exception import DatabaseConnectionError, InvalidInputError, ItemNotFoundError, NotificationError
 
 class Admin(User):
     def __init__(self, user_id, user_name):

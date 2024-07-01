@@ -1,7 +1,7 @@
-from Database import connect_to_db
-from Validation import Validation
-from logger import log_activity
-from Exception import DatabaseConnectionError, InvalidInputError
+from data.Database import connect_to_db
+from service.Validation import Validation
+from utils.logger import log_activity
+from core.Exception import DatabaseConnectionError, InvalidInputError
 
 class User:
     def __init__(self, user_id, user_name, user_role):

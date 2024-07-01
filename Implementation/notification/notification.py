@@ -1,5 +1,5 @@
-from Database import connect_to_db
-from Exception import DatabaseConnectionError, NotificationError
+from data.Database import connect_to_db
+from core.Exception import DatabaseConnectionError, NotificationError
 
 def add_notification(user_id, notification_text):
     try:

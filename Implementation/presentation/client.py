@@ -1,5 +1,5 @@
 import socket
-from Exception import CafeteriaError
+from core.Exception import CafeteriaError
 
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

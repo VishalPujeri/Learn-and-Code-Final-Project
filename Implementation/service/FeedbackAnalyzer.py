@@ -1,6 +1,6 @@
-from Database import connect_to_db
-from SentimentAnalyzer import analyze_sentiment
-from notification import add_notification
+from data.Database import connect_to_db
+from core.SentimentAnalyzer import analyze_sentiment
+from notification.notification import add_notification
 from datetime import datetime
 
 class FeedbackAnalyzer:

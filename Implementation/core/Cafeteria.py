@@ -1,6 +1,6 @@
-from Database import connect_to_db
+from data.Database import connect_to_db
 from datetime import datetime
-from MenuSorter import MenuSorter
+from utils.MenuSorter import MenuSorter
 
 class MenuItem:
     def __init__(self, menu_item_id, menu_item_name, price, availability, food_type, spice_level, is_sweet):

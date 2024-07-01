@@ -1,5 +1,5 @@
-from Database import connect_to_db
-from SentimentAnalyzer import analyze_sentiment
+from data.Database import connect_to_db
+from core.SentimentAnalyzer import analyze_sentiment
 from datetime import datetime
 
 class RecommendationGenerator:
