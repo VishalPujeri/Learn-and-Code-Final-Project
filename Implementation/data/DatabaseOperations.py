@@ -40,12 +40,25 @@ class DatabaseOperations:
         try:
             conn = connect_to_db()
             cursor = conn.cursor()
-            cursor.execute(
-                "UPDATE UserProfile SET dietary_preference = %s, spice_level = %s, cuisine_preference = %s, sweet_tooth = %s WHERE user_id = %s",
-                (dietary_preference, spice_level, cuisine_preference, sweet_tooth, user_id)
-            )
+
+            cursor.execute("SELECT COUNT(*) FROM UserProfile WHERE user_id = %s", (user_id,))
+            count = cursor.fetchone()[0]
+
+            if count == 0:
+                cursor.execute(
+                    "INSERT INTO UserProfile (user_id, dietary_preference, spice_level, cuisine_preference, sweet_tooth) VALUES (%s, %s, %s, %s, %s)",
+                    (user_id, dietary_preference, spice_level, cuisine_preference, sweet_tooth)
+                )
+                result = "Profile created successfully."
+            else:
+                cursor.execute(
+                    "UPDATE UserProfile SET dietary_preference = %s, spice_level = %s, cuisine_preference = %s, sweet_tooth = %s WHERE user_id = %s",
+                    (dietary_preference, spice_level, cuisine_preference, sweet_tooth, user_id)
+                )
+                result = "Profile updated successfully."
+
             conn.commit()
-            return "Profile updated successfully."
+            return result
         except Exception as e:
             raise Exception(f"An error occurred: {e}")
         finally:
