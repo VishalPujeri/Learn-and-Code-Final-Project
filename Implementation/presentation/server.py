@@ -1,0 +1,281 @@
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'Implementation')))
+
+import socket
+import threading
+from datetime import datetime
+from core.User import User
+from service.Admin import Admin
+from service.Chef import Chef
+from service.Employee import Employee
+from core.Cafeteria import Menu
+from service.Validation import Validation
+from data.Database import connect_to_db
+from notification.notification import get_notifications
+from core.Exception import DatabaseConnectionError, CafeteriaError
+
+def check_user_id_exists(user_id):
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Users WHERE user_id = %s", (user_id,))
+        user = cursor.fetchone()
+        return bool(user)
+    except Exception as e:
+        raise DatabaseConnectionError(f"Database connection error: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+def handle_client(client_socket):
+    user = None
+    menu = Menu()
+
+    print("Client connected")
+
+    while True:
+        try:
+            data = client_socket.recv(4096).decode('utf-8')
+            if not data:
+                break
+
+            print(f"Received command: {data}")
+            command, *params = data.split(',')
+
+            if command == 'login':
+                user_id, user_password = params
+                user = User.login(user_id, user_password)
+
+                if user:
+                    response = f"login_success,{user.user_id},{user.user_name},{user.user_role}"
+                else:
+                    response = "login_failed,Invalid user ID or password."
+
+            elif command == 'get_notifications':
+                if user:
+                    notifications = get_notifications(user.user_id)
+                    response = '\n'.join(notifications) if notifications else "No new notifications."
+                else:
+                    response = "You need to log in first."
+
+            elif user:
+                if user.user_role == 'Admin':
+                    admin = Admin(user.user_id, user.user_name)
+                    response = handle_admin_commands(admin, command, params, menu)
+
+                elif user.user_role == 'Chef':
+                    chef = Chef(user.user_id, user.user_name)
+                    response = handle_chef_commands(chef, command, params)
+
+                elif user.user_role == 'Employee':
+                    employee = Employee(user.user_id, user.user_name)
+                    response = handle_employee_commands(employee, command, params, menu)
+
+                if command == 'logout':
+                    user.logout()
+                    response = "logout_success"
+                    user = None
+            else:
+                response = "You need to log in first."
+
+            client_socket.send(response.encode('utf-8'))
+        except CafeteriaError as e:
+            response = f"Error: {e}"
+            print(response)
+            client_socket.send(response.encode('utf-8'))
+        except Exception as e:
+            response = f"An unexpected error occurred: {e}"
+            print(response)
+            client_socket.send(response.encode('utf-8'))
+
+    client_socket.close()
+
+def handle_admin_commands(admin, command, params, menu):
+    print(f"Handling admin command: {command} with params: {params}")
+    try:
+        if command == 'register_user':
+            if len(params) < 4:
+                return "error,Not enough parameters for register_user"
+
+            user_id, user_name, user_password, role_choice = params
+            if check_user_id_exists(user_id):
+                return "error,User ID already exists. Please enter a different ID."
+
+            user_role = ['Admin', 'Chef', 'Employee'][int(role_choice) - 1]
+            User.register(user_id, user_name, user_role, user_password)
+            return "Registration successful."
+
+        elif command == 'add_menu_item':
+            if len(params) < 6:
+                return "error,Not enough parameters for add_menu_item"
+
+            name, price, availability, food_type, spice_level, is_sweet = params
+            admin.add_menu_item(name, float(price), int(availability), food_type, spice_level, is_sweet)
+            return "Food item added successfully."
+
+        elif command == 'update_menu_item':
+            if len(params) < 7:
+                return "error,Not enough parameters for update_menu_item"
+
+            item_name, item_new_name, price, availability, food_type, spice_level, is_sweet = params
+            response = admin.update_menu_item(item_name, item_new_name, float(price), int(availability), food_type, spice_level, is_sweet)
+            return response
+
+        elif command == 'delete_menu_item':
+            if len(params) < 1:
+                return "error,Not enough parameters for delete_menu_item"
+
+            item_name = params[0]
+            response = admin.delete_menu_item(item_name)
+            return response
+
+        elif command == 'display_menu_items':
+            return menu.display_menu_items()
+        
+        elif command == 'logout':
+            return "logout_success"
+
+        else:
+            return "Invalid admin command."
+    except ValueError:
+        return "Invalid input. Please check your parameters."
+    except CafeteriaError as e:
+        return f"Error: {e}"
+    except Exception as e:
+        return f"An unexpected error occurred: {e}"
+
+def handle_chef_commands(chef, command, params):
+    print(f"Handling chef command: {command} with params: {params}")
+    try:
+        if command == 'recommend_menu_items':
+            if len(params) < 2:
+                return "error,Not enough parameters for recommend_menu_items"
+
+            meal_type, number_of_items, *item_ids = params
+            item_ids = list(map(int, item_ids))
+            chef.recommend_menu_items(meal_type, int(number_of_items), item_ids)
+            return "Menu items recommended successfully."
+
+        elif command == 'generate_monthly_feedback_report':
+            return chef.generate_monthly_feedback_report()
+
+        elif command == 'get_recommendations_from_feedback':
+            return chef.generate_recommendations_with_preferences()
+
+        elif command == 'display_menu_items':
+            menu = Menu()
+            return menu.display_menu_items()
+        
+        elif command == 'display_ordered_items':
+            return chef.display_ordered_items()
+        
+        elif command == 'view_discard_menu_item_list':
+            return chef.view_discard_menu_item_list()
+        
+        elif command == 'delete_menu_item':
+            if len(params) < 1:
+                return "error,Not enough parameters for delete_menu_item"
+            item_id = params[0]
+            Chef.delete_menu_item(int(item_id))
+            return f"Food item with ID {item_id} deleted successfully."
+        
+        elif command == 'roll_out_feedback_request':
+            if len(params) < 4:
+                return "error,Not enough parameters for roll_out_feedback_request"
+
+            menu_item_id, question_1, question_2, question_3 = params
+            response = chef.roll_out_feedback_request(int(menu_item_id), question_1, question_2, question_3)
+            return response
+        
+        elif command == 'logout':
+            return "logout_success"
+
+        else:
+            return "Invalid chef command."
+    except ValueError:
+        return "Invalid input. Please check your parameters."
+    except CafeteriaError as e:
+        return f"Error: {e}"
+    except Exception as e:
+        return f"An unexpected error occurred: {e}"
+
+def handle_employee_commands(employee, command, params, menu):
+    print(f"Handling employee command: {command} with params: {params}")
+    try:
+        if command == 'provide_feedback':
+            if len(params) < 3:
+                return "error,Not enough parameters for provide_feedback"
+
+            item_id, comment, rating = params
+            response = employee.provide_feedback(int(item_id), comment, float(rating))
+            return response
+
+        elif command == 'select_preference':
+            if len(params) < 1:
+                return "error,Not enough parameters for select_preference"
+
+            item_id = params[0]
+            response = employee.select_preference(int(item_id))
+            return response
+
+        elif command == 'display_menu_items':
+            return menu.display_menu_items()
+
+        if command == 'display_recommended_menu':
+            return employee.display_recommended_menu()
+        
+        elif command == 'order_food_item':
+            if len(params) < 2:
+                return "error,Not enough parameters for order_food_item"
+
+            item_id, quantity = params
+            response = employee.order_food_item(int(item_id), int(quantity))
+            return response
+
+        elif command == 'display_ordered_items':
+            return employee.display_ordered_items()
+        
+        elif command == 'submit_detailed_feedback':
+            if len(params) < 4:
+                return "error,Not enough parameters for submit_detailed_feedback"
+            
+            feedback_id, response_1, response_2, response_3 = params
+            response = employee.submit_detailed_feedback(int(feedback_id), response_1, response_2, response_3)
+            return response
+        
+        elif command == 'update_profile':
+            if len(params) < 4:
+                return "error,Not enough parameters for update_profile"
+
+            dietary_preference, spice_level, cuisine_preference, sweet_tooth = params
+            response = employee.update_profile(dietary_preference, spice_level, cuisine_preference, sweet_tooth)
+            return response
+
+        elif command == 'logout':
+            return "logout_success"
+
+        else:
+            return "Invalid employee command."
+    except ValueError:
+        return "Invalid input. Please check your parameters."
+    except CafeteriaError as e:
+        return f"Error: {e}"
+    except Exception as e:
+        return f"An unexpected error occurred: {e}"
+
+def main():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(('0.0.0.0', 9999))
+    server.listen(5)
+    print("Server listening on port 9999")
+
+    while True:
+        client_socket, addr = server.accept()
+        print(f"Accepted connection from {addr}")
+        client_handler = threading.Thread(target=handle_client, args=(client_socket,))
+        client_handler.start()
+
+if __name__ == "__main__":
+    main()
